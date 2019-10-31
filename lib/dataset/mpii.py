@@ -133,19 +133,8 @@ class MPIIDataset(JointsDataset):
         rank = np.where(dataset_joints == 'rank')[1][0]
         rhip = np.where(dataset_joints == 'rhip')[1][0]
 
-        jnt_visible = 1 - jnt_missing
-        uv_error = pos_pred_src - pos_gt_src
-        uv_err = np.linalg.norm(uv_error, axis=1)
-        headsizes = headboxes_src[1, :, :] - headboxes_src[0, :, :]
-        headsizes = np.linalg.norm(headsizes, axis=0)
-        headsizes *= SC_BIAS
-        scale = np.multiply(headsizes, np.ones((len(uv_err), 1)))
-        scaled_uv_err = np.divide(uv_err, scale)
-        scaled_uv_err = np.multiply(scaled_uv_err, jnt_visible)
-        jnt_count = np.sum(jnt_visible, axis=1)
-        less_than_threshold = np.multiply((scaled_uv_err <= threshold),
-                                          jnt_visible)
-        PCKh = np.divide(100.*np.sum(less_than_threshold, axis=1), jnt_count)
+        PCKh, scaled_uv_err, jnt_visible, jnt_count = self.calc_PCKh(pos_pred_src, pos_gt_src, jnt_missing,
+                                                                       headboxes_src, SC_BIAS, threshold)
 
         # save
         rng = np.arange(0, 0.5+0.01, 0.01)
@@ -179,3 +168,19 @@ class MPIIDataset(JointsDataset):
         name_value = OrderedDict(name_value)
 
         return name_value, name_value['Mean']
+
+    def calc_PCKh(self, pos_pred_src, pos_gt_src, jnt_missing, headboxes_src, SC_BIAS, threshold):
+        jnt_visible = 1 - jnt_missing
+        uv_error = pos_pred_src - pos_gt_src
+        uv_err = np.linalg.norm(uv_error, axis=1)
+        headsizes = headboxes_src[1, :, :] - headboxes_src[0, :, :]
+        headsizes = np.linalg.norm(headsizes, axis=0)
+        headsizes *= SC_BIAS
+        scale = np.multiply(headsizes, np.ones((len(uv_err), 1)))
+        scaled_uv_err = np.divide(uv_err, scale)
+        scaled_uv_err = np.multiply(scaled_uv_err, jnt_visible)
+        jnt_count = np.sum(jnt_visible, axis=1)
+        less_than_threshold = np.multiply((scaled_uv_err <= threshold),
+                                          jnt_visible)
+        PCKh = np.divide(100. * np.sum(less_than_threshold, axis=1), jnt_count)
+        return PCKh, scaled_uv_err, jnt_visible, jnt_count 
