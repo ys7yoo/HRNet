@@ -11,7 +11,11 @@ from __future__ import print_function
 import numpy as np
 
 from .cpu_nms import cpu_nms
-from .gpu_nms import gpu_nms
+try:
+    from .gpu_nms import gpu_nms
+    GPU_NMS_FOUND = True
+except ModuleNotFoundError:
+    GPU_NMS_FOUND = False
 
 
 def py_nms_wrapper(thresh):

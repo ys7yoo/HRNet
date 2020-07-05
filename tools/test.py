@@ -21,8 +21,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 
-
-import init_paths
+#import init_paths
 #import _init_paths
 
 
